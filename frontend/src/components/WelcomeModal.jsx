@@ -14,6 +14,8 @@ export default function WelcomeModal({ isOpen, onClose, userName, userRole }) {
 
   if (!isOpen) return null
 
+  const isAdmin = userRole === 'ADMINISTRADOR' || userRole === 'administrador'
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
       <div className="bg-gradient-to-br from-gray-900 via-black to-gray-900 border-4 border-red-600 rounded-lg shadow-2xl shadow-red-600/50 max-w-md w-full animate-scaleIn overflow-hidden">
@@ -21,9 +23,11 @@ export default function WelcomeModal({ isOpen, onClose, userName, userRole }) {
         <div className="bg-gradient-to-r from-red-600 to-red-700 p-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer"></div>
           <div className="relative z-10 text-center">
-            <div className="text-6xl mb-3 animate-bounce">👋</div>
+            <div className="text-6xl mb-3 animate-bounce">
+              {isAdmin ? '🔐' : '👋'}
+            </div>
             <h2 className="text-3xl font-black text-white uppercase tracking-wider">
-              ¡Bienvenido!
+              {isAdmin ? '¡Bienvenido Admin!' : '¡Bienvenido!'}
             </h2>
           </div>
         </div>
@@ -32,7 +36,7 @@ export default function WelcomeModal({ isOpen, onClose, userName, userRole }) {
         <div className="p-8 text-center">
           <div className="mb-6">
             <p className="text-white text-xl font-bold mb-2">
-              Has iniciado sesión como
+              {isAdmin ? 'Acceso Administrativo' : 'Has iniciado sesión como'}
             </p>
             <p className="text-red-600 text-2xl font-black uppercase tracking-wide">
               {userName}
@@ -41,8 +45,13 @@ export default function WelcomeModal({ isOpen, onClose, userName, userRole }) {
 
           <div className="mb-6 p-4 bg-red-600/20 border-2 border-red-600/50 rounded-lg">
             <p className="text-white font-bold text-lg">
-              🎯 ¡Disfruta de tus clases!
+              {isAdmin ? '⚙️ Panel de Control Activado' : '🎯 ¡Disfruta de tus clases!'}
             </p>
+            {isAdmin && (
+              <p className="text-gray-300 text-sm mt-2">
+                Gestiona usuarios, clases e instructores
+              </p>
+            )}
           </div>
 
           <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">

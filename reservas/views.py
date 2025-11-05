@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.utils import timezone
-from datetime import timedelta
+from datetime import datetime, timedelta
 import logging
 
 from .models import Reserva
@@ -85,6 +85,43 @@ class ReservaViewSet(viewsets.ModelViewSet):
             )
             raise
     
+    def destroy(self, request, pk=None):
+        """
+        Elimina una reserva del historial.
+        DELETE /api/reservas/{id}/
+        Solo se pueden eliminar reservas canceladas, completadas o no-show.
+        """
+        reserva = self.get_object()
+        
+        # Verificar que la reserva pertenezca al usuario (o sea admin)
+        if reserva.socio != request.user and not request.user.is_staff:
+            logger.warning(
+                f'Intento de eliminación no autorizado: Usuario {request.user.username} '
+                f'intentó eliminar reserva {pk} de {reserva.socio.username}'
+            )
+            raise PermisosDenegadosException('No tienes permiso para eliminar esta reserva')
+        
+        # Solo permitir eliminar reservas que no estén confirmadas
+        if reserva.estado == Reserva.CONFIRMADA:
+            return Response(
+                {'error': 'No puedes eliminar una reserva confirmada. Primero debes cancelarla.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Log antes de eliminar
+        logger.info(
+            f'Reserva eliminada: Usuario {request.user.username} eliminó reserva {pk} '
+            f'de clase {reserva.clase.nombre} ({reserva.clase.fecha}) - Estado: {reserva.estado}'
+        )
+        
+        # Eliminar la reserva
+        reserva.delete()
+        
+        return Response(
+            {'message': 'Reserva eliminada del historial'},
+            status=status.HTTP_200_OK
+        )
+    
     @action(detail=True, methods=['post'])
     def cancelar(self, request, pk=None):
         """
@@ -93,27 +130,29 @@ class ReservaViewSet(viewsets.ModelViewSet):
         """
         reserva = self.get_object()
         
-        # Verificar que la reserva pertenezca al usuario
-        if reserva.socio != request.user:
+        # Verificar que la reserva pertenezca al usuario (admins pueden cancelar cualquiera)
+        if reserva.socio != request.user and not request.user.is_staff:
             logger.warning(
                 f'Intento de cancelación no autorizado: Usuario {request.user.username} '
                 f'intentó cancelar reserva {pk} de {reserva.socio.username}'
             )
             raise PermisosDenegadosException('No tienes permiso para cancelar esta reserva')
         
-        # Verificar que se puede cancelar (2 horas antes)
-        if not reserva.puede_cancelar(horas_minimas=2):
+        # Verificar que se puede cancelar (solo para usuarios normales, no admins)
+        # Tiempo mínimo reducido a 1 hora
+        if not request.user.is_staff and not reserva.puede_cancelar(horas_minimas=1):
             # Calcular cuánto tiempo falta
             clase_datetime = timezone.make_aware(
-                timezone.datetime.combine(reserva.clase.fecha, reserva.clase.hora_inicio)
+                datetime.combine(reserva.clase.fecha, reserva.clase.hora_inicio)
             )
             tiempo_restante = clase_datetime - timezone.now()
             horas_restantes = tiempo_restante.total_seconds() / 3600
+            minutos_restantes = tiempo_restante.total_seconds() / 60
             
             if horas_restantes < 0:
                 mensaje = 'No puedes cancelar una clase que ya pasó.'
-            elif horas_restantes < 2:
-                mensaje = f'No puedes cancelar con menos de 2 horas de anticipación. Faltan {horas_restantes:.1f} horas para la clase.'
+            elif horas_restantes < 1:
+                mensaje = f'No puedes cancelar con menos de 1 hora de anticipación. Faltan {int(minutos_restantes)} minutos para la clase.'
             else:
                 mensaje = 'La reserva ya no puede ser cancelada.'
             

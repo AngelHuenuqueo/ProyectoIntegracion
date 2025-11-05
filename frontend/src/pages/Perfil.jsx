@@ -208,8 +208,8 @@ export default function Perfil() {
                 <p className="text-gray-400 font-medium mb-2">@{user.username}</p>
                 <span className={`inline-block px-4 py-1 font-black text-xs tracking-wider ${
                   user.rol === 'ADMINISTRADOR' ? 'bg-red-600' : 
-                  user.rol === 'INSTRUCTOR' ? 'bg-purple-600' : 
-                  'bg-blue-600'
+                  user.rol === 'INSTRUCTOR' ? 'bg-red-700' : 
+                  'bg-red-600'
                 } text-white uppercase`}>
                   {user.rol}
                 </span>
@@ -412,7 +412,7 @@ export default function Perfil() {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="w-full bg-purple-600 text-white py-4 font-black text-sm tracking-widest uppercase hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-purple-600"
+                    className="w-full bg-red-600 text-white py-4 font-black text-sm tracking-widest uppercase hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed border-2 border-red-600"
                   >
                     {saving ? '⏳ Cambiando...' : '🔓 Cambiar Contraseña'}
                   </button>

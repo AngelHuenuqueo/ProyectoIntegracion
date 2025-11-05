@@ -133,6 +133,26 @@ function AdminAsistencia() {
     })
   }
 
+  const cancelarReserva = async (reservaId) => {
+    const reserva = reservas.find(r => r.id === reservaId)
+    
+    setConfirmModal({
+      message: `¿Cancelar la reserva de ${reserva.socio?.first_name} ${reserva.socio?.last_name}?`,
+      type: 'cancel',
+      onConfirm: async () => {
+        setConfirmModal(null)
+        try {
+          await api.post(`/reservas/${reservaId}/cancelar/`)
+          showToast('🚫 Reserva cancelada exitosamente', 'success')
+          cargarReservas(claseSeleccionada.id)
+        } catch (error) {
+          console.error('Error:', error)
+          showToast(error.response?.data?.detail || error.response?.data?.error || 'Error al cancelar la reserva', 'error')
+        }
+      }
+    })
+  }
+
   const marcarAsistenciaMasiva = async () => {
     if (seleccionadas.size === 0) {
       showToast('Selecciona al menos una reserva', 'warning')
@@ -375,6 +395,14 @@ function AdminAsistencia() {
                                 title="Marcar como ausente"
                               >
                                 ❌
+                              </button>
+                              <button
+                                className="btn-cancel"
+                                onClick={() => cancelarReserva(reserva.id)}
+                                title="Cancelar reserva"
+                                style={{ background: '#FF6B6B', color: 'white', padding: '0.5rem 0.75rem', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '700', fontSize: '0.875rem' }}
+                              >
+                                🚫
                               </button>
                             </>
                           )}

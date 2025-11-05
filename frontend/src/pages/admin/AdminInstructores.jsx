@@ -96,17 +96,17 @@ function AdminInstructores() {
               </div>
 
               <div className="instructor-stats">
-                <div className="stat-item">
-                  <span className="stat-label">Especialidades</span>
-                  <span className="stat-value">{instructor.especialidades || 'N/A'}</span>
+                <div className="stat-item especialidades-item">
+                  <span className="stat-label">ESPECIALIDADES</span>
+                  <span className="stat-value especialidades-value">{instructor.especialidades || 'N/A'}</span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-label">Clases Asignadas</span>
-                  <span className="stat-value">{stats.totalClases}</span>
+                  <span className="stat-label">CLASES ASIGNADAS</span>
+                  <span className="stat-value stat-number">{stats.totalClases}</span>
                 </div>
                 <div className="stat-item">
-                  <span className="stat-label">Ocupación Promedio</span>
-                  <span className="stat-value">{stats.promedioOcupacion}%</span>
+                  <span className="stat-label">OCUPACIÓN PROMEDIO</span>
+                  <span className="stat-value stat-number">{stats.promedioOcupacion}%</span>
                 </div>
               </div>
 

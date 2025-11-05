@@ -17,6 +17,7 @@ import PrivateRoute from './components/PrivateRoute'
 import NotificationCenter from './components/NotificationCenter'
 import ErrorBoundary from './components/ErrorBoundary'
 import Toast from './components/Toast'
+import ConfirmModal from './components/ConfirmModal'
 import { setShowToast } from './services/api'
 import './App.css'
 
@@ -34,6 +35,7 @@ function App() {
   const [toastMessage, setToastMessage] = useState('')
   const [toastType, setToastType] = useState('info')
   const [showToast, setShowToastState] = useState(false)
+  const [mostrarConfirmacionLogout, setMostrarConfirmacionLogout] = useState(false)
 
   // Función para mostrar Toast
   const displayToast = (message, type = 'info') => {
@@ -67,13 +69,21 @@ function App() {
     localStorage.setItem('darkMode', JSON.stringify(darkMode))
   }, [darkMode])
 
-  function logout() {
+  function mostrarModalLogout() {
+    setMostrarConfirmacionLogout(true)
+  }
+
+  function confirmarLogout() {
+    setMostrarConfirmacionLogout(false)
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
     setIsLogged(false)
     setUserRole(null)
-    navigate('/login')
+    displayToast('✅ Sesión cerrada exitosamente', 'success')
+    setTimeout(() => {
+      navigate('/login')
+    }, 1500)
   }
 
   function toggleDarkMode() {
@@ -84,13 +94,16 @@ function App() {
   const isHomePage = location.pathname === '/'
   const isLoginPage = location.pathname === '/login'
 
+  // Estado para menú móvil
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
   return (
     <ErrorBoundary>
       <div className="app-root min-h-screen bg-black">
         {/* Solo mostrar el navbar del sistema si NO estamos en Home ni en Login */}
         {!isHomePage && !isLoginPage && (
           <nav className="bg-black/95 backdrop-blur-md border-b-4 border-red-600 fixed top-0 w-full z-50">
-            <div className="px-8 py-4 flex justify-center items-center gap-8">
+            <div className="px-4 md:px-8 py-4 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="absolute inset-0 bg-red-600 blur-lg opacity-50"></div>
@@ -105,7 +118,9 @@ function App() {
                   <p className="text-xs text-gray-400 tracking-widest">FITNESS CENTER</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+
+              {/* Desktop Menu */}
+              <div className="hidden lg:flex items-center gap-4">
                 {isLogged && userRole === 'administrador' ? (
                   <>
                     <Link to="/admin" className="text-gray-300 hover:text-red-600 transition-all font-bold text-sm tracking-wide uppercase">📊 Dashboard</Link>
@@ -126,25 +141,66 @@ function App() {
                 ) : null}
                 {isLogged && <NotificationCenter />}
                 {!isLogged ? (
-                  <Link to="/login" className="bg-red-600 text-white px-8 py-3 font-black tracking-wider uppercase text-sm hover:bg-red-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-red-600/50">
+                  <Link to="/login" className="bg-red-600 text-white px-6 py-2 md:px-8 md:py-3 font-black tracking-wider uppercase text-xs md:text-sm hover:bg-red-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-red-600/50">
                     Iniciar Sesión
                   </Link>
                 ) : (
                   <button 
-                    className="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-3 font-black tracking-wider uppercase text-sm hover:from-red-700 hover:to-red-800 transition-all transform hover:scale-105 shadow-lg hover:shadow-red-600/50 border-2 border-red-500 hover:border-red-400 relative overflow-hidden group" 
-                    onClick={logout}
+                    className="bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-2 md:px-8 md:py-3 font-black tracking-wider uppercase text-xs md:text-sm hover:from-red-700 hover:to-red-800 transition-all transform hover:scale-105 shadow-lg hover:shadow-red-600/50 border-2 border-red-500 hover:border-red-400 relative overflow-hidden group" 
+                    onClick={mostrarModalLogout}
                   >
                     <span className="relative z-10 flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
-                      CERRAR SESIÓN
+                      <span className="hidden md:inline">CERRAR SESIÓN</span>
+                      <span className="md:hidden">SALIR</span>
                     </span>
                     <span className="absolute inset-0 bg-black opacity-0 group-hover:opacity-20 transition-opacity"></span>
                   </button>
                 )}
               </div>
+
+              {/* Mobile Menu Button - ROJO */}
+              <button 
+                className="lg:hidden text-red-600 hover:text-red-700 transition-colors"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                  {mobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
             </div>
+
+            {/* Mobile Menu */}
+            {mobileMenuOpen && (
+              <div className="lg:hidden border-t-2 border-red-600 bg-black/98 backdrop-blur-md">
+                <div className="px-4 py-4 space-y-3">
+                  {isLogged && userRole === 'administrador' ? (
+                    <>
+                      <Link to="/admin" onClick={() => setMobileMenuOpen(false)} className="block text-gray-300 hover:text-red-600 transition-colors font-bold text-sm uppercase py-2 border-b border-gray-800">📊 Dashboard</Link>
+                      <Link to="/admin/usuarios" onClick={() => setMobileMenuOpen(false)} className="block text-gray-300 hover:text-red-600 transition-colors font-bold text-sm uppercase py-2 border-b border-gray-800">👥 Usuarios</Link>
+                      <Link to="/admin/clases" onClick={() => setMobileMenuOpen(false)} className="block text-gray-300 hover:text-red-600 transition-colors font-bold text-sm uppercase py-2 border-b border-gray-800">🏋️ Clases</Link>
+                      <Link to="/admin/instructores" onClick={() => setMobileMenuOpen(false)} className="block text-gray-300 hover:text-red-600 transition-colors font-bold text-sm uppercase py-2 border-b border-gray-800">🎓 Instructores</Link>
+                      <Link to="/admin/reportes" onClick={() => setMobileMenuOpen(false)} className="block text-gray-300 hover:text-red-600 transition-colors font-bold text-sm uppercase py-2 border-b border-gray-800">📈 Reportes</Link>
+                      <Link to="/perfil" onClick={() => setMobileMenuOpen(false)} className="block text-gray-300 hover:text-red-600 transition-colors font-bold text-sm uppercase py-2 border-b border-gray-800">Mi Perfil</Link>
+                    </>
+                  ) : isLogged ? (
+                    <>
+                      <Link to="/clases" onClick={() => setMobileMenuOpen(false)} className="block text-gray-300 hover:text-red-600 transition-colors font-bold text-sm uppercase py-2 border-b border-gray-800">Clases</Link>
+                      <Link to="/calendario" onClick={() => setMobileMenuOpen(false)} className="block text-gray-300 hover:text-red-600 transition-colors font-bold text-sm uppercase py-2 border-b border-gray-800">Calendario</Link>
+                      <Link to="/reservas" onClick={() => setMobileMenuOpen(false)} className="block text-gray-300 hover:text-red-600 transition-colors font-bold text-sm uppercase py-2 border-b border-gray-800">Mis Reservas</Link>
+                      <Link to="/estadisticas" onClick={() => setMobileMenuOpen(false)} className="block text-gray-300 hover:text-red-600 transition-colors font-bold text-sm uppercase py-2 border-b border-gray-800">Estadísticas</Link>
+                      <Link to="/perfil" onClick={() => setMobileMenuOpen(false)} className="block text-gray-300 hover:text-red-600 transition-colors font-bold text-sm uppercase py-2">Mi Perfil</Link>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            )}
           </nav>
         )}
 
@@ -217,6 +273,19 @@ function App() {
             message={toastMessage} 
             type={toastType} 
             onClose={() => setShowToastState(false)} 
+          />
+        )}
+
+        {/* Modal de confirmación para cerrar sesión */}
+        {mostrarConfirmacionLogout && (
+          <ConfirmModal
+            title="Cerrar Sesión"
+            message={`¿Estás seguro de que deseas cerrar sesión?
+
+Serás redirigido a la página de inicio de sesión.`}
+            type="warning"
+            onConfirm={confirmarLogout}
+            onCancel={() => setMostrarConfirmacionLogout(false)}
           />
         )}
       </div>

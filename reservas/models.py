@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from datetime import datetime, timedelta
 from usuarios.models import Usuario
 from clases.models import Clase
 
@@ -90,13 +91,20 @@ class Reserva(models.Model):
     
     def cancelar(self):
         """Cancela la reserva y libera el cupo."""
-        if self.estado == self.CONFIRMADA:
+        # Si ya está cancelada, retornar True
+        if self.estado == self.CANCELADA:
+            return True
+            
+        # Permitir cancelar si está confirmada o completada
+        if self.estado in [self.CONFIRMADA, self.COMPLETADA]:
+            estado_anterior = self.estado
             self.estado = self.CANCELADA
             self.fecha_cancelacion = timezone.now()
             self.save()
             
-            # Liberar cupo en la clase
-            self.clase.liberar_cupo()
+            # Liberar cupo en la clase solo si estaba confirmada
+            if estado_anterior == self.CONFIRMADA:
+                self.clase.liberar_cupo()
             
             return True
         return False
@@ -124,21 +132,20 @@ class Reserva(models.Model):
             return True
         return False
     
-    def puede_cancelar(self, horas_minimas=2):
+    def puede_cancelar(self, horas_minimas=1):
         """
         Verifica si la reserva puede ser cancelada.
-        Por defecto requiere cancelar con al menos 2 horas de anticipación.
+        Por defecto requiere cancelar con al menos 1 hora de anticipación.
         """
         if self.estado != self.CONFIRMADA:
             return False
         
         # Calcular datetime de la clase
         clase_datetime = timezone.make_aware(
-            timezone.datetime.combine(self.clase.fecha, self.clase.hora_inicio)
+            datetime.combine(self.clase.fecha, self.clase.hora_inicio)
         )
         
         # Calcular tiempo mínimo requerido
-        from datetime import timedelta
         tiempo_minimo = clase_datetime - timedelta(hours=horas_minimas)
         
         # Verificar que aún hay tiempo

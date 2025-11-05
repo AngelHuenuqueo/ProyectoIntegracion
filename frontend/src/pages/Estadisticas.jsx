@@ -336,7 +336,7 @@ export default function Estadisticas() {
             {/* Métricas Clave */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <div className="bg-gradient-to-br from-purple-900 to-black border-2 border-purple-800 p-6 hover:border-purple-600 transition-all relative overflow-hidden group">
-                <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/5 transition-all"></div>
+                <div className="absolute inset-0 bg-red-600/0 group-hover:bg-red-600/5 transition-all"></div>
                 <div className="relative z-10">
                   <div className="text-4xl mb-2">📈</div>
                   <div className="text-4xl font-black text-white mb-2">{totalReservas}</div>
@@ -360,7 +360,7 @@ export default function Estadisticas() {
                 </div>
               </div>
               <div className="bg-gradient-to-br from-blue-900 to-black border-2 border-blue-800 p-6 hover:border-blue-600 transition-all relative overflow-hidden group">
-                <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 transition-all"></div>
+                <div className="absolute inset-0 bg-red-700/0 group-hover:bg-red-700/5 transition-all"></div>
                 <div className="relative z-10">
                   <div className="text-4xl mb-2">📅</div>
                   <div className="text-4xl font-black text-white mb-2">{promedioPorMes}</div>
@@ -421,7 +421,7 @@ export default function Estadisticas() {
                     </tr>
                     <tr className="border-b border-gray-800 hover:bg-gray-900/50 transition-all">
                       <td className="py-4 px-4">
-                        <span className="inline-block bg-blue-600 text-white px-3 py-1 font-black text-xs tracking-wider uppercase">Completadas</span>
+                        <span className="inline-block bg-red-600 text-white px-3 py-1 font-black text-xs tracking-wider uppercase">Completadas</span>
                       </td>
                       <td className="py-4 px-4 text-white font-black text-lg">{estadoStats.completadas}</td>
                       <td className="py-4 px-4 text-gray-300 font-medium">{((estadoStats.completadas / totalReservas) * 100).toFixed(1)}%</td>

@@ -268,22 +268,23 @@ h1 {
   line-height: 1.1;
 }
 
-button {
+/* Botones genéricos (sin clases de Tailwind) */
+button:not([class*="bg-"]):not([class*="text-"]):not([class*="border-"]) {
   border-radius: 8px;
   border: none;
   padding: 12px 24px;
   font-size: 1em;
   font-weight: 600;
   font-family: inherit;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
   color: white;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-button:hover {
+button:not([class*="bg-"]):not([class*="text-"]):not([class*="border-"]):hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
 }
 
 button:disabled {

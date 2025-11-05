@@ -83,7 +83,39 @@ export default function Reservas() {
     }
   }
 
-  async function salirListaEspera(id) {
+  async function eliminarReserva(id) {
+    const reserva = reservas.find(r => r.id === id)
+    
+    const confirmed = await confirm({
+      message: '¿Eliminar esta reserva del historial? Esta acción no se puede deshacer.',
+      title: 'Eliminar del Historial',
+      type: 'danger'
+    })
+    
+    if (!confirmed) return
+    
+    try {
+      await api.delete(`reservas/${id}/`)
+      setMessage({ type: 'success', text: 'Reserva eliminada del historial' })
+      
+      // Agregar notificación
+      addNotification({
+        type: 'info',
+        title: '🗑️ Eliminado del historial',
+        message: `${reserva?.clase?.nombre || 'La reserva'} fue eliminada de tu historial`
+      })
+      
+      fetchReservas()
+      setTimeout(() => setMessage(null), 3000)
+    } catch (err) {
+      const errorMsg = err.response?.data?.detail || 'Error al eliminar la reserva'
+      setMessage({ type: 'error', text: errorMsg })
+      
+      setTimeout(() => setMessage(null), 3000)
+    }
+  }
+
+  async function cancelarListaEspera(id) {
     const entrada = listaEspera.find(le => le.id === id)
     
     const confirmed = await confirm({
@@ -176,14 +208,14 @@ export default function Reservas() {
         <div className="flex gap-2">
           <button 
             onClick={() => handleExportarLista('todas')}
-            className="bg-purple-600 text-white px-4 py-2 font-black text-xs tracking-wider uppercase hover:bg-purple-700 transition-all disabled:opacity-50"
+            className="bg-red-600 text-white px-4 py-2 font-black text-xs tracking-wider uppercase hover:bg-red-700 transition-all disabled:opacity-50"
             disabled={reservas.length === 0}
           >
             📄 Exportar Todas
           </button>
           <button 
             onClick={() => handleExportarLista('activas')}
-            className="bg-blue-600 text-white px-4 py-2 font-black text-xs tracking-wider uppercase hover:bg-blue-700 transition-all disabled:opacity-50"
+            className="bg-red-700 text-white px-4 py-2 font-black text-xs tracking-wider uppercase hover:bg-red-800 transition-all disabled:opacity-50"
             disabled={reservasActivas.length === 0}
           >
             📄 Exportar Activas
@@ -235,7 +267,7 @@ export default function Reservas() {
                         </button>
                         <button 
                           onClick={() => handleExportarComprobante(r)}
-                          className="flex-1 bg-purple-600 text-white py-3 font-black text-xs tracking-wider uppercase hover:bg-purple-700 transition-all"
+                          className="flex-1 bg-red-600 text-white py-3 font-black text-xs tracking-wider uppercase hover:bg-red-700 transition-all"
                           title="Descargar comprobante PDF"
                         >
                           📄 PDF
@@ -305,10 +337,11 @@ export default function Reservas() {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {reservasPasadas.map((r) => (
-                    <div className="bg-gradient-to-b from-gray-900 to-black border-l-4 border-gray-700 border-2 border-gray-800 p-6 opacity-70" key={r.id}>
+                    <div className="bg-gradient-to-b from-gray-900 to-black border-l-4 border-gray-700 border-2 border-gray-800 hover:border-gray-600 p-6 opacity-70 hover:opacity-100 transition-all relative group" key={r.id}>
                       <h3 className="text-2xl font-black text-white mb-2 tracking-wide uppercase">{r.clase?.nombre || 'Clase sin nombre'}</h3>
-                      <p className="text-gray-400 font-medium mb-4">📅 {r.clase?.fecha || 'Fecha no disponible'}</p>
-                      <p className={`font-black text-sm ${
+                      <p className="text-gray-400 font-medium mb-1">📅 {r.clase?.fecha || 'Fecha no disponible'}</p>
+                      <p className="text-gray-400 font-medium mb-4">⏰ {r.clase?.hora_inicio?.substring(0, 5) || '--:--'} - {r.clase?.hora_fin?.substring(0, 5) || '--:--'}</p>
+                      <p className={`font-black text-sm mb-4 ${
                         r.estado?.toLowerCase() === 'completada' ? 'text-green-500' : 
                         r.estado?.toLowerCase() === 'cancelada' ? 'text-orange-500' : 'text-red-500'
                       }`}>
@@ -317,6 +350,13 @@ export default function Reservas() {
                         {r.estado?.toLowerCase() === 'noshow' && '⚠ '}
                         {r.estado?.toUpperCase() || 'ESTADO DESCONOCIDO'}
                       </p>
+                      <button 
+                        onClick={() => eliminarReserva(r.id)}
+                        className="w-full bg-gray-700 text-white py-2 px-4 font-bold text-xs tracking-wider uppercase hover:bg-red-600 transition-all"
+                        title="Eliminar del historial"
+                      >
+                        🗑️ Eliminar
+                      </button>
                     </div>
                   ))}
                 </div>

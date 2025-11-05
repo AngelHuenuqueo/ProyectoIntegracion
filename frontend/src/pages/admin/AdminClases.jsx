@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
+import Toast from '../../components/Toast'
+import ConfirmModal from '../../components/ConfirmModal'
 import './Admin.css'
 
 function AdminClases() {
@@ -11,6 +13,10 @@ function AdminClases() {
   const [busqueda, setBusqueda] = useState('')
   const [mostrarModal, setMostrarModal] = useState(false)
   const [modoEdicion, setModoEdicion] = useState(false)
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' })
+  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false)
+  const [mostrarConfirmacionEliminar, setMostrarConfirmacionEliminar] = useState(false)
+  const [claseAEliminar, setClaseAEliminar] = useState(null)
   const [claseForm, setClaseForm] = useState({
     nombre: '',
     descripcion: '',
@@ -34,7 +40,7 @@ function AdminClases() {
     if (userStr) {
       const user = JSON.parse(userStr)
       if (user.rol !== 'administrador') {
-        alert('No tienes permisos para acceder a esta sección')
+        setToast({ show: true, message: '⚠️ No tienes permisos para acceder a esta sección', type: 'warning' })
         navigate('/clases')
       }
     }
@@ -57,7 +63,7 @@ function AdminClases() {
       setInstructores(instData)
     } catch (error) {
       console.error('Error cargando datos:', error)
-      alert('Error al cargar los datos')
+      setToast({ show: true, message: '❌ Error al cargar los datos', type: 'error' })
     } finally {
       setLoading(false)
     }
@@ -124,13 +130,21 @@ function AdminClases() {
     })
   }
 
+  const validarYMostrarConfirmacion = () => {
+    // Validaciones
+    if (!claseForm.nombre || !claseForm.fecha || !claseForm.hora_inicio || !claseForm.hora_fin) {
+      setToast({ show: true, message: '⚠️ Por favor completa todos los campos obligatorios', type: 'warning' })
+      return
+    }
+    // Cerrar modal de edición y mostrar confirmación
+    setMostrarModal(false)
+    setMostrarConfirmacion(true)
+  }
+
   const guardarClase = async () => {
     try {
-      // Validaciones
-      if (!claseForm.nombre || !claseForm.fecha || !claseForm.hora_inicio || !claseForm.hora_fin) {
-        alert('Por favor completa todos los campos obligatorios')
-        return
-      }
+      // Cerrar modal de confirmación
+      setMostrarConfirmacion(false)
 
       // Preparar datos - solo enviar instructor si tiene valor
       const dataToSend = {
@@ -152,10 +166,10 @@ function AdminClases() {
       
       if (modoEdicion) {
         await api.put(`/clases/${claseForm.id}/`, dataToSend)
-        alert('Clase actualizada exitosamente')
+        setToast({ show: true, message: '✅ Clase actualizada exitosamente', type: 'success' })
       } else {
         await api.post('/clases/', dataToSend)
-        alert('Clase creada exitosamente')
+        setToast({ show: true, message: '✅ Clase creada exitosamente', type: 'success' })
       }
       
       cerrarModal()
@@ -173,24 +187,32 @@ function AdminClases() {
         errorMsg = errorDetail
       }
       
-      alert(errorMsg)
+      setToast({ show: true, message: `❌ ${errorMsg}`, type: 'error' })
     }
   }
 
-  const eliminarClase = async (clase) => {
-    const confirmar = window.confirm(
-      `¿Estás SEGURO de ELIMINAR la clase "${clase.nombre}"?\n\nSe eliminarán también todas las reservas asociadas.`
-    )
-    
-    if (!confirmar) return
+  const cancelarConfirmacion = () => {
+    setMostrarConfirmacion(false)
+    setMostrarModal(true) // Volver a abrir el modal de edición
+  }
 
+  const mostrarModalEliminar = (clase) => {
+    setClaseAEliminar(clase)
+    setMostrarConfirmacionEliminar(true)
+  }
+
+  const confirmarEliminarClase = async () => {
+    setMostrarConfirmacionEliminar(false)
+    
     try {
-      await api.delete(`/clases/${clase.id}/`)
-      alert('Clase eliminada exitosamente')
+      await api.delete(`/clases/${claseAEliminar.id}/`)
+      setToast({ show: true, message: '✅ Clase eliminada exitosamente', type: 'success' })
       cargarDatos()
     } catch (error) {
       console.error('Error eliminando clase:', error)
-      alert('Error al eliminar la clase')
+      setToast({ show: true, message: '❌ Error al eliminar la clase', type: 'error' })
+    } finally {
+      setClaseAEliminar(null)
     }
   }
 
@@ -271,7 +293,7 @@ function AdminClases() {
                     </button>
                     <button 
                       className="btn-delete" 
-                      onClick={() => eliminarClase(clase)}
+                      onClick={() => mostrarModalEliminar(clase)}
                       title="Eliminar clase"
                     >
                       🗑️
@@ -417,12 +439,50 @@ function AdminClases() {
 
             <div className="modal-footer">
               <button className="btn-cancel" onClick={cerrarModal}>Cancelar</button>
-              <button className="btn-save" onClick={guardarClase}>
+              <button className="btn-save" onClick={validarYMostrarConfirmacion}>
                 {modoEdicion ? 'Guardar Cambios' : 'Crear Clase'}
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast de notificaciones */}
+      {toast.show && (
+        <Toast 
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
+        />
+      )}
+
+      {/* Modal de confirmación para guardar */}
+      {mostrarConfirmacion && (
+        <ConfirmModal
+          title={modoEdicion ? 'Confirmar Cambios' : 'Confirmar Creación'}
+          message={modoEdicion 
+            ? `¿Estás seguro de guardar los cambios en la clase "${claseForm.nombre}"?` 
+            : `¿Estás seguro de crear la clase "${claseForm.nombre}"?`}
+          type="info"
+          onConfirm={guardarClase}
+          onCancel={cancelarConfirmacion}
+        />
+      )}
+
+      {/* Modal de confirmación para eliminar */}
+      {mostrarConfirmacionEliminar && claseAEliminar && (
+        <ConfirmModal
+          title="¡Confirmar Eliminación!"
+          message={`¿Estás SEGURO de ELIMINAR la clase "${claseAEliminar.nombre}"?
+
+Se eliminarán también todas las reservas asociadas.`}
+          type="danger"
+          onConfirm={confirmarEliminarClase}
+          onCancel={() => {
+            setMostrarConfirmacionEliminar(false)
+            setClaseAEliminar(null)
+          }}
+        />
       )}
     </div>
   )
