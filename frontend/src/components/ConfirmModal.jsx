@@ -1,6 +1,8 @@
 import './ConfirmModal.css'
 
-export default function ConfirmModal({ message, onConfirm, onCancel, type = 'warning', title }) {
+export default function ConfirmModal({ message, onConfirm, onCancel, type = 'warning', title, isOpen = true }) {
+  if (!isOpen) return null
+
   const getIcon = () => {
     switch (type) {
       case 'warning':
@@ -11,6 +13,8 @@ export default function ConfirmModal({ message, onConfirm, onCancel, type = 'war
         return 'ℹ️'
       case 'cancel':
         return '🚫'
+      case 'confirm':
+        return '✅'
       default:
         return '❓'
     }
@@ -26,6 +30,8 @@ export default function ConfirmModal({ message, onConfirm, onCancel, type = 'war
         return 'Peligro'
       case 'cancel':
         return 'Cancelar Reserva'
+      case 'confirm':
+        return 'Confirmar Acción'
       default:
         return 'Confirmación'
     }
@@ -38,7 +44,7 @@ export default function ConfirmModal({ message, onConfirm, onCancel, type = 'war
         
         <h2 className="modal-title">{getTitle()}</h2>
 
-        <p className="modal-message">{message}</p>
+        <p className="modal-message" style={{ whiteSpace: 'pre-line' }}>{message}</p>
 
         <div className="modal-actions">
           <button onClick={onCancel} className="btn-cancel">

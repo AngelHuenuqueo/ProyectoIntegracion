@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Gimnasio Energía Total</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #0a0a0a 100%);
+            color: #e0e0e0;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(20, 184, 166, 0.1));
+            border-radius: 20px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #06b6d4, #14b8a6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #94a3b8;
+            font-size: 1.2rem;
+        }
+
+        /* Navigation */
+        nav {
+            background: rgba(30, 41, 59, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+
+        nav h2 {
+            color: #06b6d4;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        nav a {
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 10px 18px;
+            display: block;
+            border-radius: 8px;
+            transition: all 0.3s;
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        nav a:hover {
+            background: rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+        }
+
+        /* Sections */
+        section {
+            background: rgba(30, 41, 59, 0.6);
+            padding: 35px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        section h2 {
+            color: #06b6d4;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(6, 182, 212, 0.3);
+        }
+
+        section h3 {
+            color: #14b8a6;
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+        }
+
+        section h4 {
+            color: #f59e0b;
+            font-size: 1.1rem;
+            margin: 20px 0 10px 0;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: #cbd5e1;
+        }
+
+        /* Screenshot container */
+        .screenshot-container {
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .screenshot {
+            max-width: 100%;
+            border-radius: 12px;
+            border: 2px solid rgba(6, 182, 212, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s;
+        }
+
+        .screenshot:hover {
+            transform: scale(1.02);
+        }
+
+        .screenshot-caption {
+            margin-top: 12px;
+            color: #94a3b8;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th {
+            background: rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        tr:hover {
+            background: rgba(6, 182, 212, 0.05);
+        }
+
+        code {
+            background: rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-family: 'Consolas', monospace;
+        }
+
+        /* Lists */
+        ul,
+        ol {
+            margin: 15px 0 15px 25px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: #cbd5e1;
+        }
+
+        /* Role Cards */
+        .role-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .role-card {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(20, 184, 166, 0.05));
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            text-align: center;
+        }
+
+        .role-card .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .role-card h3 {
+            color: #06b6d4;
+            margin-bottom: 10px;
+        }
+
+        /* Steps */
+        .steps {
+            counter-reset: step;
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .steps li {
+            position: relative;
+            padding-left: 45px;
+            margin-bottom: 15px;
+        }
+
+        .steps li::before {
+            counter-increment: step;
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #06b6d4, #14b8a6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* Feature Box */
+        .feature-box {
+            background: rgba(15, 23, 42, 0.5);
+            border-left: 4px solid #06b6d4;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .feature-box h4 {
+            color: #06b6d4;
+            margin-bottom: 10px;
+        }
+
+        /* FAQ */
+        .faq-item {
+            background: rgba(15, 23, 42, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .faq-item h4 {
+            color: #f59e0b;
+            margin-bottom: 10px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+
+            section {
+                background: white;
+                border: 1px solid #ddd;
+            }
+
+            h1,
+            h2,
+            h3,
+            h4 {
+                color: #0891b2 !important;
+                -webkit-text-fill-color: #0891b2 !important;
+            }
+
+            nav {
+                position: static;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            section {
+                padding: 20px;
+            }
+
+            nav ul {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>📘 Manual de Usuario</h1>
+            <p>Sistema de Gestión de Gimnasio "Energía Total"</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav>
+            <h2>📋 Navegación Rápida</h2>
+            <ul>
+                <li><a href="#introduccion">🏠 Introducción</a></li>
+                <li><a href="#acceso">🔐 Acceso</a></li>
+                <li><a href="#socio">👤 Socio</a></li>
+                <li><a href="#instructor">👨‍🏫 Instructor</a></li>
+                <li><a href="#admin">🔧 Administrador</a></li>
+                <li><a href="#faq">❓ FAQ</a></li>
+            </ul>
+        </nav>
+
+        <!-- Introducción -->
+        <section id="introduccion">
+            <h2>🏠 Introducción</h2>
+            <p>El Sistema de Gestión de Gimnasio "Energía Total" es una plataforma web diseñada para facilitar la
+                administración de clases, reservas e instructores de un gimnasio.</p>
+
+            <div class="role-cards">
+                <div class="role-card">
+                    <div class="icon">👤</div>
+                    <h3>Socio</h3>
+                    <p>Usuarios que reservan clases y gestionan su perfil personal</p>
+                </div>
+                <div class="role-card">
+                    <div class="icon">👨‍🏫</div>
+                    <h3>Instructor</h3>
+                    <p>Profesores que imparten clases y gestionan asistencia</p>
+                </div>
+                <div class="role-card">
+                    <div class="icon">🔧</div>
+                    <h3>Administrador</h3>
+                    <p>Personal que administra todo el sistema</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Acceso al Sistema -->
+        <section id="acceso">
+            <h2>🔐 Acceso al Sistema</h2>
+
+            <div class="screenshot-container">
+                <img src="manual_images/login_page.png" alt="Página de Login" class="screenshot">
+                <p class="screenshot-caption">Figura 1: Pantalla de inicio de sesión del sistema</p>
+            </div>
+
+            <h3>Iniciar Sesión</h3>
+            <ol class="steps">
+                <li>Acceda a la página principal del sistema</li>
+                <li>Ingrese su <strong>nombre de usuario</strong> en el campo correspondiente</li>
+                <li>Ingrese su <strong>contraseña</strong></li>
+                <li>Presione el botón <strong>"Iniciar Sesión"</strong></li>
+            </ol>
+
+            <h3>Credenciales de Prueba</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rol</th>
+                        <th>Usuario</th>
+                        <th>Contraseña</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Administrador</td>
+                        <td><code>admin.gimnasio</code></td>
+                        <td><code>admin123</code></td>
+                    </tr>
+                    <tr>
+                        <td>Administrador</td>
+                        <td><code>admin.recepcion</code></td>
+                        <td><code>admin123</code></td>
+                    </tr>
+                    <tr>
+                        <td>Instructor</td>
+                        <td><code>instructor.spinning</code></td>
+                        <td><code>prueba123</code></td>
+                    </tr>
+                    <tr>
+                        <td>Instructor</td>
+                        <td><code>instructor.yoga</code></td>
+                        <td><code>prueba123</code></td>
+                    </tr>
+                    <tr>
+                        <td>Socio</td>
+                        <td><code>juan.perez</code></td>
+                        <td><code>prueba123</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Panel del Socio -->
+        <section id="socio">
+            <h2>👤 Panel del Socio</h2>
+            <p>Al iniciar sesión como socio, tendrá acceso a las siguientes funcionalidades:</p>
+
+            <h3>🏠 Dashboard Principal</h3>
+            <div class="screenshot-container">
+                <img src="manual_images/socio_dashboard.png" alt="Dashboard del Socio" class="screenshot">
+                <p class="screenshot-caption">Figura 2: Panel principal del socio con resumen de actividad</p>
+            </div>
+            <p>El dashboard muestra un resumen de sus reservas activas, próximas clases y estadísticas personales.</p>
+
+            <h3>📚 Clases Disponibles</h3>
+            <div class="screenshot-container">
+                <img src="manual_images/clases_disponibles.png" alt="Clases Disponibles" class="screenshot">
+                <p class="screenshot-caption">Figura 3: Lista de clases disponibles para reservar</p>
+            </div>
+
+            <div class="feature-box">
+                <h4>Funcionalidades de Clases:</h4>
+                <ul>
+                    <li>Ver todas las clases disponibles</li>
+                    <li>Filtrar por tipo (Spinning, Yoga, Pilates, Cardio, etc.)</li>
+                    <li>Buscar clases específicas por nombre</li>
+                    <li><strong>Reservar una clase</strong>: Haga clic en "Reservar Ahora"</li>
+                    <li>Unirse a la <strong>lista de espera</strong> si la clase está llena</li>
+                </ul>
+            </div>
+
+            <h4>Para reservar una clase:</h4>
+            <ol class="steps">
+                <li>Navegue a la sección "Clases"</li>
+                <li>Busque la clase deseada usando los filtros</li>
+                <li>Verifique los cupos disponibles</li>
+                <li>Haga clic en el botón <strong>"Reservar Ahora"</strong></li>
+                <li>Confirme la reserva en el modal de confirmación</li>
+            </ol>
+
+            <div class="feature-box">
+                <h4>📅 Calendario</h4>
+                <p>Vista mensual de todas las clases con navegación entre meses y vista rápida de horarios.</p>
+            </div>
+
+            <div class="feature-box">
+                <h4>📋 Mis Reservas</h4>
+                <ul>
+                    <li>Ver reservas activas y pasadas</li>
+                    <li><strong>Cancelar reservas</strong> (solo clases futuras)</li>
+                    <li>Ver historial de asistencia</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4>👤 Mi Perfil</h4>
+                <ul>
+                    <li>Actualizar nombre y apellido</li>
+                    <li>Modificar email y teléfono</li>
+                    <li>Cambiar contraseña</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4>🔔 Notificaciones</h4>
+                <p>Reciba alertas de clases próximas, confirmaciones de reservas y avisos de cambios en tiempo real.</p>
+            </div>
+        </section>
+
+        <!-- Panel del Instructor -->
+        <section id="instructor">
+            <h2>👨‍🏫 Panel del Instructor</h2>
+            <p>Al iniciar sesión como instructor, accederá a un panel especializado:</p>
+
+            <h3>🏠 Dashboard del Instructor</h3>
+            <div class="screenshot-container">
+                <img src="manual_images/instructor_dashboard.png" alt="Dashboard del Instructor" class="screenshot">
+                <p class="screenshot-caption">Figura 4: Panel principal del instructor con resumen de clases</p>
+            </div>
+            <p>Muestra el resumen de clases del día, total de clases de la semana y estadísticas de alumnos inscritos.
+            </p>
+
+            <div class="feature-box">
+                <h4>📋 Mis Clases</h4>
+                <ul>
+                    <li>Ver detalles de cada clase que imparte</li>
+                    <li><strong>Editar clases</strong> (solo las propias y futuras)</li>
+                    <li>Ver cupos ocupados/disponibles</li>
+                    <li>Verificar lista de alumnos inscritos</li>
+                </ul>
+            </div>
+
+            <h4>Para editar una clase:</h4>
+            <ol class="steps">
+                <li>Ubique la clase en la lista de "Mis Clases"</li>
+                <li>Haga clic en el botón <strong>"✏️ Editar"</strong></li>
+                <li>Modifique los campos deseados: Nombre, Descripción, Fecha, Hora, Cupos</li>
+                <li>Presione <strong>"💾 Guardar Cambios"</strong></li>
+            </ol>
+
+            <div class="feature-box">
+                <h4>✅ Control de Asistencia</h4>
+                <ol class="steps">
+                    <li>Seleccione una clase de la lista</li>
+                    <li>Vea los alumnos inscritos en la clase</li>
+                    <li>Marque la asistencia de cada alumno</li>
+                    <li>Los cambios se guardan automáticamente</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Panel del Administrador -->
+        <section id="admin">
+            <h2>🔧 Panel del Administrador</h2>
+            <p>El administrador tiene acceso completo a todas las funciones del sistema:</p>
+
+            <h3>🏠 Dashboard Administrativo</h3>
+            <div class="screenshot-container">
+                <img src="manual_images/admin_dashboard.png" alt="Dashboard del Admin" class="screenshot">
+                <p class="screenshot-caption">Figura 5: Panel principal de administración con estadísticas generales</p>
+            </div>
+            <p>Vista general con total de usuarios, reservas del día, estadísticas y accesos rápidos a todos los
+                módulos.</p>
+
+            <h3>🏋️ Gestión de Clases</h3>
+            <div class="screenshot-container">
+                <img src="manual_images/admin_clases.png" alt="Gestión de Clases" class="screenshot">
+                <p class="screenshot-caption">Figura 6: Panel de administración de clases</p>
+            </div>
+
+            <h4>Crear nueva clase:</h4>
+            <ol class="steps">
+                <li>Haga clic en <strong>"⚡ Nueva Clase"</strong></li>
+                <li>Complete los campos: Nombre, Descripción, Instructor</li>
+                <li>Seleccione Fecha, Hora inicio y Hora fin</li>
+                <li>Configure Cupos totales y Tipo de clase</li>
+                <li>Seleccione el Estado (activa, cancelada, etc.)</li>
+                <li>Clic en "Crear Clase"</li>
+                <li>Confirme la operación</li>
+            </ol>
+
+            <div class="feature-box">
+                <h4>👥 Gestión de Usuarios</h4>
+                <ul>
+                    <li><strong>Ver lista</strong> de usuarios (socios, instructores, admins)</li>
+                    <li><strong>Crear nuevo usuario</strong>: Botón "➕ Nuevo Usuario"</li>
+                    <li><strong>Editar usuario</strong>: Clic en el ícono ✏️</li>
+                    <li><strong>Cambiar contraseña</strong>: Opción en el menú</li>
+                    <li><strong>Eliminar usuario</strong>: Clic en 🗑️ (requiere confirmación)</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4>📋 Gestión de Reservas</h4>
+                <ul>
+                    <li>Ver todas las reservas del sistema</li>
+                    <li>Filtrar por fecha, estado o usuario</li>
+                    <li>Cancelar reservas si es necesario</li>
+                    <li>Ver historial completo</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4>👨‍🏫 Gestión de Instructores</h4>
+                <ul>
+                    <li>Ver lista completa de instructores</li>
+                    <li>Asignar clases a instructores</li>
+                    <li>Gestionar especialidades</li>
+                    <li>Ver estadísticas por instructor</li>
+                </ul>
+            </div>
+
+            <div class="feature-box">
+                <h4>📊 Reportes</h4>
+                <ul>
+                    <li>Clases más populares</li>
+                    <li>Ocupación por horario</li>
+                    <li>Estadísticas de reservas</li>
+                    <li>Exportación de datos</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- FAQ -->
+        <section id="faq">
+            <h2>❓ Preguntas Frecuentes</h2>
+
+            <div class="faq-item">
+                <h4>¿Cómo cancelo una reserva?</h4>
+                <ol class="steps">
+                    <li>Vaya a "Mis Reservas" en el menú lateral</li>
+                    <li>Encuentre la reserva activa que desea cancelar</li>
+                    <li>Haga clic en el botón "Cancelar"</li>
+                    <li>Confirme la cancelación en el modal</li>
+                </ol>
+            </div>
+
+            <div class="faq-item">
+                <h4>¿Qué pasa si la clase está llena?</h4>
+                <p>Puede unirse a la <strong>lista de espera</strong>. Cuando alguien cancele su reserva, recibirá una
+                    notificación y su lugar será confirmado automáticamente.</p>
+            </div>
+
+            <div class="faq-item">
+                <h4>¿Cómo cambio mi contraseña?</h4>
+                <ol class="steps">
+                    <li>Vaya a "Mi Perfil" desde el menú</li>
+                    <li>Busque la sección "Seguridad"</li>
+                    <li>Ingrese su contraseña actual</li>
+                    <li>Ingrese la nueva contraseña dos veces</li>
+                    <li>Guarde los cambios</li>
+                </ol>
+            </div>
+
+            <div class="faq-item">
+                <h4>¿Por qué no veo algunas clases?</h4>
+                <p>Solo se muestran clases <strong>activas</strong> con fechas <strong>futuras</strong>. Las clases
+                    pasadas o canceladas no aparecen en la lista de disponibles, pero puede verlas en su historial.</p>
+            </div>
+
+            <div class="faq-item">
+                <h4>¿Cómo activo las notificaciones push?</h4>
+                <ol class="steps">
+                    <li>Haga clic en el ícono de campana 🔔</li>
+                    <li>Si aparece el botón "Activar", haga clic en él</li>
+                    <li>Acepte el permiso en el navegador</li>
+                    <li>Recibirá notificaciones de reservas y recordatorios</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p><strong>Soporte Técnico</strong></p>
+            <p>📧 Email: soporte@energiatotal.cl | 📞 Teléfono: (02) 2123-4567</p>
+            <p style="margin-top: 20px;">
+                <strong>Gimnasio Energía Total</strong><br>
+                Manual de Usuario v1.0 | Diciembre 2024
+            </p>
+        </footer>
+    </div>
+</body>
+
+</html>

@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.utils import timezone
+from datetime import timedelta
 
 
 class Usuario(AbstractUser):
@@ -126,7 +127,6 @@ class Usuario(AbstractUser):
         
         # Bloquear si alcanza 3 no-shows en el mes
         if self.noshow_mes_actual >= 3:
-            from datetime import timedelta
             self.bloqueado_hasta = timezone.now() + timedelta(days=30)
             self.estado_membresia = self.SUSPENDIDA
         
@@ -157,6 +157,12 @@ class Instructor(models.Model):
         blank=True,
         help_text='Ej: Spinning, Yoga, Pilates',
         verbose_name='Especialidades'
+    )
+    
+    certificaciones = models.TextField(
+        blank=True,
+        help_text='Certificaciones y títulos del instructor',
+        verbose_name='Certificaciones'
     )
     
     biografia = models.TextField(

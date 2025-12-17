@@ -93,20 +93,30 @@ class InstructorSerializer(serializers.ModelSerializer):
     """
     Serializer para Instructor.
     """
-    usuario = UsuarioSerializer(read_only=True)
+    usuario_data = UsuarioSerializer(source='usuario', read_only=True)
+    usuario = serializers.PrimaryKeyRelatedField(
+        queryset=Usuario.objects.filter(rol='instructor'),
+        write_only=False
+    )
     nombre_completo = serializers.SerializerMethodField()
+    usuario_nombre = serializers.SerializerMethodField()
     
     class Meta:
         model = Instructor
         fields = [
-            'id', 'usuario', 'nombre_completo', 'especialidades',
-            'biografia', 'foto', 'activo', 'fecha_creacion'
+            'id', 'usuario', 'usuario_data', 'usuario_nombre', 'nombre_completo', 
+            'especialidades', 'certificaciones', 'biografia', 'foto', 'activo', 
+            'fecha_creacion'
         ]
         read_only_fields = ['id', 'fecha_creacion']
     
     def get_nombre_completo(self, obj):
         """Retorna el nombre completo del instructor."""
         return obj.usuario.get_full_name()
+    
+    def get_usuario_nombre(self, obj):
+        """Retorna el nombre completo del usuario asociado."""
+        return obj.usuario.get_full_name() if obj.usuario else 'N/A'
 
 
 class CambiarPasswordSerializer(serializers.Serializer):

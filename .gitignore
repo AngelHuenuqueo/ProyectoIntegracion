@@ -38,6 +38,8 @@ logs/
 
 # Environment variables
 .env
+frontend/.env
+backend/.env
 
 # Node.js / Frontend
 node_modules/

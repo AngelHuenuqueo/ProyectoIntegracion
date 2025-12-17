@@ -1,11 +1,28 @@
 import axios from 'axios'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/'
+
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api/',
+  baseURL: API_BASE_URL,
 })
 
 // Variable global para mostrar Toasts (será inicializada desde App.jsx)
 let showToastGlobal = null
+
+// Flag para evitar múltiples refrescos simultáneos
+let isRefreshing = false
+let failedQueue = []
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token)
+    }
+  })
+  failedQueue = []
+}
 
 export const setShowToast = (toastFunction) => {
   showToastGlobal = toastFunction
@@ -25,69 +42,125 @@ api.interceptors.request.use(
   }
 )
 
-// Interceptor de RESPONSE: Manejo global de errores
+// Interceptor de RESPONSE: Manejo global de errores con auto-refresh
 api.interceptors.response.use(
   (response) => {
-    // Si la respuesta es exitosa, simplemente la retornamos
     return response
   },
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config
+
     // Verificar si el error tiene una configuración para NO mostrar Toast
-    // Esto permite que componentes específicos manejen sus propios errores
     if (error.config?.skipGlobalErrorHandler) {
       return Promise.reject(error)
     }
 
-    // Extraer información del error
+    // Si es 401 y no es un retry, intentar refrescar el token
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // Si es el endpoint de login o refresh, no intentar refrescar
+      if (originalRequest.url?.includes('auth/login') || originalRequest.url?.includes('auth/refresh')) {
+        return Promise.reject(error)
+      }
+
+      if (isRefreshing) {
+        // Si ya estamos refrescando, encolar esta petición
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`
+          return api(originalRequest)
+        }).catch(err => {
+          return Promise.reject(err)
+        })
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      const refreshToken = localStorage.getItem('refresh_token')
+
+      if (refreshToken) {
+        try {
+          // Intentar refrescar el token
+          const response = await axios.post(`${API_BASE_URL}auth/refresh/`, {
+            refresh: refreshToken
+          })
+
+          const newAccessToken = response.data.access
+
+          // Guardar el nuevo token
+          localStorage.setItem('access_token', newAccessToken)
+
+          // Actualizar header de la petición original
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+
+          // Procesar cola de peticiones pendientes
+          processQueue(null, newAccessToken)
+
+          // Reintentar la petición original
+          return api(originalRequest)
+        } catch (refreshError) {
+          // El refresh también falló, limpiar todo y redirigir
+          processQueue(refreshError, null)
+
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          localStorage.removeItem('user')
+
+          if (showToastGlobal) {
+            showToastGlobal('Tu sesión ha expirado. Inicia sesión nuevamente.', 'warning')
+          }
+
+          setTimeout(() => {
+            window.location.href = '/login'
+          }, 1500)
+
+          return Promise.reject(refreshError)
+        } finally {
+          isRefreshing = false
+        }
+      } else {
+        // No hay refresh token, redirigir al login
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('user')
+
+        if (showToastGlobal) {
+          showToastGlobal('Tu sesión ha expirado. Inicia sesión nuevamente.', 'warning')
+        }
+
+        setTimeout(() => {
+          window.location.href = '/login'
+        }, 1500)
+
+        return Promise.reject(error)
+      }
+    }
+
+    // Manejo de otros errores
     const status = error.response?.status
     const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message
-    
-    // Variable para el mensaje que mostraremos al usuario
-    let userMessage = ''
-    let shouldRedirect = false
 
-    // Manejo específico por código de error
+    let userMessage = ''
+
     switch (status) {
       case 400:
-        // Bad Request - generalmente errores de validación
         userMessage = errorMessage || 'Datos inválidos. Verifica tu información.'
         break
-
-      case 401:
-        // Unauthorized - token expirado o inválido
-        userMessage = 'Tu sesión ha expirado. Inicia sesión nuevamente.'
-        shouldRedirect = true
-        
-        // Limpiar tokens del localStorage
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
-        localStorage.removeItem('user_role')
-        break
-
       case 403:
-        // Forbidden - sin permisos
         userMessage = 'No tienes permisos para realizar esta acción.'
         break
-
       case 404:
-        // Not Found
         userMessage = 'El recurso solicitado no fue encontrado.'
         break
-
       case 409:
-        // Conflict - ejemplo: reserva duplicada
         userMessage = errorMessage || 'Ya existe un registro similar.'
         break
-
       case 500:
       case 502:
       case 503:
-        // Server errors
         userMessage = 'Error del servidor. Por favor, intenta de nuevo más tarde.'
         break
-
       default:
-        // Network error o cualquier otro error
         if (!error.response) {
           userMessage = 'Sin conexión a internet. Verifica tu conexión.'
         } else {
@@ -95,22 +168,14 @@ api.interceptors.response.use(
         }
     }
 
-    // Mostrar Toast si tenemos la función global configurada
     if (showToastGlobal && userMessage) {
       const toastType = status >= 500 ? 'error' : status >= 400 ? 'warning' : 'error'
       showToastGlobal(userMessage, toastType)
     }
 
-    // Redirigir al login si es necesario (con un pequeño delay para que se vea el Toast)
-    if (shouldRedirect) {
-      setTimeout(() => {
-        window.location.href = '/login'
-      }, 1500)
-    }
-
-    // Rechazar la promesa para que el componente pueda manejar el error si lo necesita
     return Promise.reject(error)
   }
 )
 
 export default api
+

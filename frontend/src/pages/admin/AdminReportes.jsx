@@ -1,25 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import { Bar, Line, Pie } from 'react-chartjs-2'
 import jsPDF from 'jspdf'
-import 'jspdf-autotable'
-import './Admin.css'
+import AdminLayout from './AdminLayout'
 
 function AdminReportes() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
-  const [periodo, setPeriodo] = useState('mes') // mes, semana, año
   const [reservas, setReservas] = useState([])
   const [clases, setClases] = useState([])
   const [usuarios, setUsuarios] = useState([])
 
-  useEffect(() => {
-    verificarPermiso()
-    cargarDatos()
-  }, [])
-
-  const verificarPermiso = () => {
+  const verificarPermiso = useCallback(() => {
     const userStr = localStorage.getItem('user')
     if (userStr) {
       const user = JSON.parse(userStr)
@@ -28,12 +21,12 @@ function AdminReportes() {
         navigate('/clases')
       }
     }
-  }
+  }, [navigate])
 
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     try {
       setLoading(true)
-      
+
       const [reservasRes, clasesRes, usuariosRes] = await Promise.all([
         api.get('/reservas/'),
         api.get('/clases/'),
@@ -49,7 +42,12 @@ function AdminReportes() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    verificarPermiso()
+    cargarDatos()
+  }, [verificarPermiso, cargarDatos])
 
   // Top 5 clases más populares
   const getClasesPopulares = () => {
@@ -57,8 +55,8 @@ function AdminReportes() {
       nombre: clase.nombre,
       reservas: reservas.filter(r => r.clase?.id === clase.id && r.estado === 'confirmada').length
     }))
-    .sort((a, b) => b.reservas - a.reservas)
-    .slice(0, 5)
+      .sort((a, b) => b.reservas - a.reservas)
+      .slice(0, 5)
 
     return {
       labels: clasesConReservas.map(c => c.nombre),
@@ -70,18 +68,16 @@ function AdminReportes() {
       }]
     }
   }
-
-  // Top 5 usuarios más activos
   const getUsuariosActivos = () => {
     const socios = usuarios.filter(u => u.rol === 'socio')
     const usuariosConReservas = socios.map(usuario => ({
-      nombre: usuario.first_name && usuario.last_name 
+      nombre: usuario.first_name && usuario.last_name
         ? `${usuario.first_name} ${usuario.last_name}`
         : usuario.username,
       reservas: reservas.filter(r => r.socio?.id === usuario.id).length
     }))
-    .sort((a, b) => b.reservas - a.reservas)
-    .slice(0, 5)
+      .sort((a, b) => b.reservas - a.reservas)
+      .slice(0, 5)
 
     return {
       labels: usuariosConReservas.map(u => u.nombre),
@@ -146,10 +142,10 @@ function AdminReportes() {
       instructor: 0,
       administrador: 0
     }
-    
+
     usuarios.forEach(usuario => {
       const rol = usuario.rol || 'socio'
-      if (roles.hasOwnProperty(rol)) {
+      if (Object.prototype.hasOwnProperty.call(roles, rol)) {
         roles[rol]++
       }
     })
@@ -173,10 +169,10 @@ function AdminReportes() {
       noshow: 0,
       completada: 0
     }
-    
+
     reservas.forEach(reserva => {
       const estado = reserva.estado || 'confirmada'
-      if (estados.hasOwnProperty(estado)) {
+      if (Object.prototype.hasOwnProperty.call(estados, estado)) {
         estados[estado]++
       }
     })
@@ -195,7 +191,7 @@ function AdminReportes() {
   // Exportar a PDF
   const exportarPDF = () => {
     const doc = new jsPDF()
-    
+
     // Título
     doc.setFontSize(18)
     doc.text('Reporte de Gimnasio - Energía Total', 14, 20)
@@ -206,7 +202,7 @@ function AdminReportes() {
     doc.setFontSize(14)
     doc.text('Resumen General', 14, 40)
     doc.setFontSize(10)
-    
+
     const stats = [
       ['Total Usuarios', usuarios.length],
       ['Total Clases', clases.length],
@@ -228,7 +224,7 @@ function AdminReportes() {
     const clasesTop = getClasesPopulares()
     doc.setFontSize(14)
     doc.text('Top 5 Clases Más Populares', 14, doc.lastAutoTable.finalY + 15)
-    
+
     doc.autoTable({
       startY: doc.lastAutoTable.finalY + 20,
       head: [['Clase', 'Reservas']],
@@ -241,7 +237,7 @@ function AdminReportes() {
     const usuariosTop = getUsuariosActivos()
     doc.setFontSize(14)
     doc.text('Top 5 Usuarios Más Activos', 14, doc.lastAutoTable.finalY + 15)
-    
+
     doc.autoTable({
       startY: doc.lastAutoTable.finalY + 20,
       head: [['Usuario', 'Reservas']],
@@ -255,21 +251,21 @@ function AdminReportes() {
   }
 
   if (loading) {
-    return <div className="admin-container"><div className="loading">Cargando reportes...</div></div>
+    return (
+      <AdminLayout title="📊 Reportes y Estadísticas" subtitle="Análisis detallado del gimnasio">
+        <div className="loading">Cargando reportes...</div>
+      </AdminLayout>
+    )
   }
 
   return (
-    <div className="admin-container">
-      <div className="admin-header">
-        <h1>📊 Reportes y Estadísticas</h1>
-        <div className="header-actions">
-          <button className="btn-primary" onClick={exportarPDF}>📥 Exportar PDF</button>
-          <button className="btn-back" onClick={() => navigate('/admin')}>← Volver</button>
-        </div>
+    <AdminLayout title="📊 Reportes y Estadísticas" subtitle="Análisis detallado del gimnasio">
+      <div className="header-actions" style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
+        <button className="btn-primary" onClick={exportarPDF}>📥 Exportar PDF</button>
       </div>
 
       {/* Resumen ejecutivo */}
-      <div className="executive-summary">
+      <div className="executive-summary" >
         <h2>Resumen Ejecutivo</h2>
         <div className="summary-grid">
           <div className="summary-card">
@@ -293,15 +289,15 @@ function AdminReportes() {
             <small>Personal activo</small>
           </div>
         </div>
-      </div>
+      </div >
 
       {/* Gráficos */}
-      <div className="reports-charts">
+      < div className="reports-charts" >
         {/* Fila 1: Gráficos circulares */}
-        <div className="chart-card">
+        < div className="chart-card" >
           <h3>🏋️ Distribución por Tipo de Clase</h3>
           <div className="chart-container">
-            <Pie 
+            <Pie
               data={getDistribucionTipoClase()}
               options={{
                 responsive: true,
@@ -313,19 +309,20 @@ function AdminReportes() {
                       padding: 10,
                       font: {
                         size: 11
-                      }
+                      },
+                      color: '#E5E7EB'
                     }
                   }
                 }
               }}
             />
           </div>
-        </div>
+        </div >
 
         <div className="chart-card">
           <h3>� Usuarios por Rol</h3>
           <div className="chart-container">
-            <Pie 
+            <Pie
               data={getUsuariosPorRol()}
               options={{
                 responsive: true,
@@ -337,7 +334,8 @@ function AdminReportes() {
                       padding: 10,
                       font: {
                         size: 11
-                      }
+                      },
+                      color: '#E5E7EB'
                     }
                   }
                 }
@@ -349,7 +347,7 @@ function AdminReportes() {
         <div className="chart-card">
           <h3>� Reservas por Estado</h3>
           <div className="chart-container">
-            <Pie 
+            <Pie
               data={getReservasPorEstado()}
               options={{
                 responsive: true,
@@ -361,7 +359,8 @@ function AdminReportes() {
                       padding: 10,
                       font: {
                         size: 11
-                      }
+                      },
+                      color: '#E5E7EB'
                     }
                   }
                 }
@@ -374,8 +373,8 @@ function AdminReportes() {
         <div className="chart-card">
           <h3>📊 Top 5 Clases Más Populares</h3>
           <div className="chart-container">
-            <Bar 
-              data={getClasesPopulares()} 
+            <Bar
+              data={getClasesPopulares()}
               options={{
                 responsive: true,
                 maintainAspectRatio: true,
@@ -385,10 +384,22 @@ function AdminReportes() {
                   }
                 },
                 scales: {
-                  y: { 
+                  x: {
+                    ticks: {
+                      color: '#E5E7EB'
+                    },
+                    grid: {
+                      color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                  },
+                  y: {
                     beginAtZero: true,
                     ticks: {
-                      stepSize: 1
+                      stepSize: 1,
+                      color: '#E5E7EB'
+                    },
+                    grid: {
+                      color: 'rgba(255, 255, 255, 0.1)'
                     }
                   }
                 }
@@ -400,7 +411,7 @@ function AdminReportes() {
         <div className="chart-card">
           <h3>� Top 5 Usuarios Más Activos</h3>
           <div className="chart-container">
-            <Bar 
+            <Bar
               data={getUsuariosActivos()}
               options={{
                 responsive: true,
@@ -411,10 +422,22 @@ function AdminReportes() {
                   }
                 },
                 scales: {
-                  y: { 
+                  x: {
+                    ticks: {
+                      color: '#E5E7EB'
+                    },
+                    grid: {
+                      color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                  },
+                  y: {
                     beginAtZero: true,
                     ticks: {
-                      stepSize: 1
+                      stepSize: 1,
+                      color: '#E5E7EB'
+                    },
+                    grid: {
+                      color: 'rgba(255, 255, 255, 0.1)'
                     }
                   }
                 }
@@ -427,7 +450,7 @@ function AdminReportes() {
         <div className="chart-card chart-wide">
           <h3>� Reservas por Día de la Semana</h3>
           <div className="chart-container">
-            <Line 
+            <Line
               data={getReservasPorDia()}
               options={{
                 responsive: true,
@@ -438,10 +461,22 @@ function AdminReportes() {
                   }
                 },
                 scales: {
-                  y: { 
+                  x: {
+                    ticks: {
+                      color: '#E5E7EB'
+                    },
+                    grid: {
+                      color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                  },
+                  y: {
                     beginAtZero: true,
                     ticks: {
-                      stepSize: 1
+                      stepSize: 1,
+                      color: '#E5E7EB'
+                    },
+                    grid: {
+                      color: 'rgba(255, 255, 255, 0.1)'
                     }
                   }
                 }
@@ -449,10 +484,10 @@ function AdminReportes() {
             />
           </div>
         </div>
-      </div>
+      </div >
 
       {/* Tabla de rendimiento */}
-      <div className="performance-table">
+      < div className="performance-table" >
         <h2>Rendimiento por Clase</h2>
         <table className="admin-table">
           <thead>
@@ -470,8 +505,8 @@ function AdminReportes() {
             {clases.map(clase => {
               const reservasClase = reservas.filter(r => r.clase?.id === clase.id)
               const confirmadas = reservasClase.filter(r => r.estado === 'confirmada').length
-              const ocupacion = clase.cupos_totales > 0 
-                ? ((confirmadas / clase.cupos_totales) * 100).toFixed(1) 
+              const ocupacion = clase.cupos_totales > 0
+                ? ((confirmadas / clase.cupos_totales) * 100).toFixed(1)
                 : 0
 
               return (
@@ -492,8 +527,8 @@ function AdminReportes() {
             })}
           </tbody>
         </table>
-      </div>
-    </div>
+      </div >
+    </AdminLayout>
   )
 }
 

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useNotifications } from '../components/NotificationCenter'
+import { useNotifications } from './useNotifications'
 
 // Hook para generar recordatorios automáticos de clases próximas
 export function useClassReminders(reservas) {
@@ -18,7 +18,7 @@ export function useClassReminders(reservas) {
       try {
         // Combinar fecha y hora para comparación
         const fechaHora = new Date(`${reserva.clase.fecha}T${reserva.clase.hora_inicio}`)
-        
+
         // Si la clase es dentro de las próximas 24 horas
         if (fechaHora > ahora && fechaHora <= en24Horas) {
           const horasRestantes = Math.floor((fechaHora - ahora) / (1000 * 60 * 60))

@@ -29,6 +29,8 @@ from usuarios.views import UsuarioViewSet, InstructorViewSet
 from clases.views import ClaseViewSet
 from reservas.views import ReservaViewSet
 from lista_espera.views import ListaEsperaViewSet
+from equipamiento.views import EquipoViewSet
+from notificaciones.views import NotificacionViewSet
 
 # Configurar el router de DRF
 router = DefaultRouter()
@@ -37,6 +39,8 @@ router.register(r'instructores', InstructorViewSet, basename='instructor')
 router.register(r'clases', ClaseViewSet, basename='clase')
 router.register(r'reservas', ReservaViewSet, basename='reserva')
 router.register(r'lista-espera', ListaEsperaViewSet, basename='lista-espera')
+router.register(r'equipos', EquipoViewSet, basename='equipo')
+router.register(r'notificaciones', NotificacionViewSet, basename='notificacion')
 
 urlpatterns = [
     # Admin de Django

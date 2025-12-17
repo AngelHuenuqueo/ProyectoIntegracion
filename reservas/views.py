@@ -34,7 +34,10 @@ class ReservaViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        """Retorna las reservas del usuario actual."""
+        """Retorna las reservas según el rol del usuario."""
+        # Los administradores pueden ver todas las reservas
+        if self.request.user.is_staff:
+            return Reserva.objects.all().order_by('-fecha_reserva')
         return Reserva.objects.filter(socio=self.request.user).order_by('-fecha_reserva')
     
     def get_serializer_class(self):
@@ -64,13 +67,27 @@ class ReservaViewSet(viewsets.ModelViewSet):
                 f'para {reserva.clase.fecha} {reserva.clase.hora_inicio}'
             )
             
-            # Crear notificación
+            # Crear notificaciones
             from notificaciones.models import Notificacion
+            # Notificación para el socio
             Notificacion.crear_notificacion_reserva(
                 socio=request.user,
                 clase=reserva.clase,
                 tipo=Notificacion.RESERVA_CONFIRMADA
             )
+            # Notificación para el instructor
+            logger.info(f'Intentando notificar al instructor de la clase {reserva.clase.nombre}')
+            logger.info(f'Clase tiene instructor: {reserva.clase.instructor}')
+            if reserva.clase.instructor:
+                logger.info(f'Usuario del instructor: {reserva.clase.instructor.usuario}')
+            notif_instructor = Notificacion.notificar_instructor_nueva_reserva(
+                clase=reserva.clase,
+                socio=request.user
+            )
+            if notif_instructor:
+                logger.info(f'Notificación creada para instructor: ID {notif_instructor.id}')
+            else:
+                logger.warning('No se pudo crear notificación para el instructor')
             
             return Response({
                 'message': 'Reserva creada exitosamente',
@@ -138,27 +155,28 @@ class ReservaViewSet(viewsets.ModelViewSet):
             )
             raise PermisosDenegadosException('No tienes permiso para cancelar esta reserva')
         
-        # Verificar que se puede cancelar (solo para usuarios normales, no admins)
-        # Tiempo mínimo reducido a 1 hora
-        if not request.user.is_staff and not reserva.puede_cancelar(horas_minimas=1):
-            # Calcular cuánto tiempo falta
-            clase_datetime = timezone.make_aware(
-                datetime.combine(reserva.clase.fecha, reserva.clase.hora_inicio)
+        # Verificar si la clase ya pasó
+        clase_datetime = timezone.make_aware(
+            datetime.combine(reserva.clase.fecha, reserva.clase.hora_inicio)
+        )
+        clase_paso = clase_datetime < timezone.now()
+        
+        # Si la clase ya pasó, permitir cancelar pero registrar en el log
+        if clase_paso:
+            logger.info(
+                f'Cancelación de clase pasada: Usuario {request.user.username} '
+                f'canceló reserva {pk} de clase {reserva.clase.nombre} que ya pasó el {reserva.clase.fecha}'
             )
+        # Si la clase no ha pasado, verificar tiempo mínimo (solo para usuarios normales, no admins)
+        elif not request.user.is_staff and not reserva.puede_cancelar(horas_minimas=1):
             tiempo_restante = clase_datetime - timezone.now()
-            horas_restantes = tiempo_restante.total_seconds() / 3600
             minutos_restantes = tiempo_restante.total_seconds() / 60
             
-            if horas_restantes < 0:
-                mensaje = 'No puedes cancelar una clase que ya pasó.'
-            elif horas_restantes < 1:
-                mensaje = f'No puedes cancelar con menos de 1 hora de anticipación. Faltan {int(minutos_restantes)} minutos para la clase.'
-            else:
-                mensaje = 'La reserva ya no puede ser cancelada.'
+            mensaje = f'No puedes cancelar con menos de 1 hora de anticipación. Faltan {int(minutos_restantes)} minutos para la clase.'
             
             logger.warning(
                 f'Cancelación tardía rechazada: Usuario {request.user.username} '
-                f'intentó cancelar reserva {pk} con {horas_restantes:.1f} horas de anticipación'
+                f'intentó cancelar reserva {pk} con {minutos_restantes:.1f} minutos de anticipación'
             )
             raise CancelacionTardiaException(mensaje)
         
@@ -169,13 +187,24 @@ class ReservaViewSet(viewsets.ModelViewSet):
                 f'para clase {reserva.clase.nombre} del {reserva.clase.fecha}'
             )
             
-            # Procesar siguiente en lista de espera si existe
-            from lista_espera.models import ListaEspera
-            siguiente_reserva = ListaEspera.procesar_siguiente_en_lista(reserva.clase)
+            # Notificar al instructor sobre la cancelación
+            from notificaciones.models import Notificacion
+            Notificacion.notificar_instructor_cancelacion(
+                clase=reserva.clase,
+                socio=request.user
+            )
+            logger.info(f'Notificación de cancelación enviada al instructor de {reserva.clase.nombre}')
             
+            # Solo procesar lista de espera si la clase no ha pasado
             mensaje = 'Reserva cancelada exitosamente'
-            if siguiente_reserva:
-                mensaje += '. Se asignó el cupo al siguiente en lista de espera.'
+            if not clase_paso:
+                from lista_espera.models import ListaEspera
+                siguiente_reserva = ListaEspera.procesar_siguiente_en_lista(reserva.clase)
+                
+                if siguiente_reserva:
+                    mensaje += '. Se asignó el cupo al siguiente en lista de espera.'
+            else:
+                mensaje += '. La clase ya había pasado, pero se ha registrado la cancelación en tu historial.'
             
             return Response({'message': mensaje})
         else:
@@ -299,15 +328,15 @@ class ReservaViewSet(viewsets.ModelViewSet):
         logger.warning(
             f'NO-SHOW registrado: Usuario {socio.username} (ID: {socio.id}) '
             f'no asistió a clase {reserva.clase.nombre} del {reserva.clase.fecha}. '
-            f'Total no-shows: {socio.noshow_count}'
+            f'Total no-shows: {socio.total_noshow}'
         )
         
         # Si el usuario fue bloqueado, registrar
-        if socio.bloqueado:
+        if socio.esta_bloqueado():
             logger.error(
                 f'USUARIO BLOQUEADO: {socio.username} (ID: {socio.id}) fue bloqueado '
-                f'por exceso de no-shows ({socio.noshow_count}). '
-                f'Fecha de bloqueo: {socio.fecha_bloqueo}'
+                f'por exceso de no-shows ({socio.total_noshow}). '
+                f'Bloqueado hasta: {socio.bloqueado_hasta}'
             )
         
         # Crear notificación de advertencia
@@ -320,7 +349,7 @@ class ReservaViewSet(viewsets.ModelViewSet):
         
         Notificacion.objects.create(
             usuario=socio,
-            tipo=Notificacion.ADVERTENCIA,
+            tipo=Notificacion.OTROS,
             titulo='⚠️ No-Show Registrado',
             mensaje=mensaje
         )

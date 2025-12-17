@@ -11,7 +11,7 @@ class ErrorBoundary extends React.Component {
     }
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     // Actualizar estado para mostrar UI de error
     return { hasError: true }
   }
@@ -19,7 +19,7 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(error, errorInfo) {
     // Registrar error para debugging
     console.error('ErrorBoundary capturó un error:', error, errorInfo)
-    
+
     // Guardar información del error en el estado
     this.setState({
       error: error,
@@ -51,8 +51,8 @@ class ErrorBoundary extends React.Component {
             <p className="error-message">
               Lo sentimos, ha ocurrido un error inesperado en la aplicación.
             </p>
-            
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+
+            {import.meta.env.MODE === 'development' && this.state.error && (
               <details className="error-details">
                 <summary>Detalles del error (solo en desarrollo)</summary>
                 <div className="error-stack">

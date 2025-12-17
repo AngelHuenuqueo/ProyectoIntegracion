@@ -198,3 +198,45 @@ class Notificacion(models.Model):
                 'hora': str(clase.hora_inicio)
             }
         )
+    
+    @staticmethod
+    def notificar_instructor_nueva_reserva(clase, socio):
+        """Notifica al instructor cuando hay una nueva reserva en su clase."""
+        if clase.instructor and clase.instructor.usuario:
+            return Notificacion.objects.create(
+                usuario=clase.instructor.usuario,
+                tipo=Notificacion.RESERVA_CONFIRMADA,
+                canal=Notificacion.SISTEMA,
+                titulo=f'Nueva reserva - {clase.nombre}',
+                mensaje=f'{socio.get_full_name() or socio.username} se ha inscrito en tu clase {clase.nombre} del {clase.fecha} a las {clase.hora_inicio}.',
+                datos_adicionales={
+                    'clase_id': clase.id,
+                    'clase_nombre': clase.nombre,
+                    'fecha': str(clase.fecha),
+                    'hora': str(clase.hora_inicio),
+                    'socio_id': socio.id,
+                    'socio_nombre': socio.get_full_name() or socio.username
+                }
+            )
+        return None
+    
+    @staticmethod
+    def notificar_instructor_cancelacion(clase, socio):
+        """Notifica al instructor cuando se cancela una reserva de su clase."""
+        if clase.instructor and clase.instructor.usuario:
+            return Notificacion.objects.create(
+                usuario=clase.instructor.usuario,
+                tipo=Notificacion.RESERVA_CANCELADA,
+                canal=Notificacion.SISTEMA,
+                titulo=f'Reserva cancelada - {clase.nombre}',
+                mensaje=f'{socio.get_full_name() or socio.username} ha cancelado su reserva para la clase {clase.nombre} del {clase.fecha} a las {clase.hora_inicio}.',
+                datos_adicionales={
+                    'clase_id': clase.id,
+                    'clase_nombre': clase.nombre,
+                    'fecha': str(clase.fecha),
+                    'hora': str(clase.hora_inicio),
+                    'socio_id': socio.id,
+                    'socio_nombre': socio.get_full_name() or socio.username
+                }
+            )
+        return None

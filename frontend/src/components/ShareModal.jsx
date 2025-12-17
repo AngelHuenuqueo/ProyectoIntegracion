@@ -55,9 +55,8 @@ export default function ShareModal({ clase, onClose }) {
     if (!email) return
 
     // En un caso real, aquí llamarías a tu API
-    console.log('Enviando email a:', email)
-    console.log('Mensaje:', shareMessage)
-    
+
+
     // Simular envío
     setEmailSent(true)
     setTimeout(() => {

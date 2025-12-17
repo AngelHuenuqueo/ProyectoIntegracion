@@ -95,9 +95,10 @@ class ListaEspera(models.Model):
     def asignar_cupo(self):
         """
         Asigna un cupo disponible al socio en la lista de espera.
-        Crea automáticamente una reserva.
+        Crea automáticamente una reserva y notifica al usuario.
         """
         from reservas.models import Reserva
+        from notificaciones.models import Notificacion
         
         if self.estado == self.ESPERANDO and not self.clase.esta_llena:
             # Crear la reserva
@@ -114,6 +115,9 @@ class ListaEspera(models.Model):
             self.estado = self.ASIGNADO
             self.fecha_asignacion = timezone.now()
             self.save()
+            
+            # Notificar al socio que fue asignado desde lista de espera
+            Notificacion.crear_notificacion_cupo_disponible(self.socio, self.clase)
             
             return reserva
         return None

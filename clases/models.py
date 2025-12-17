@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from usuarios.models import Instructor
 
@@ -50,6 +51,13 @@ class Clase(models.Model):
     descripcion = models.TextField(
         blank=True,
         verbose_name='Descripción'
+    )
+    
+    imagen = models.ImageField(
+        upload_to='clases/',
+        null=True,
+        blank=True,
+        verbose_name='Imagen de la Clase'
     )
     
     instructor = models.ForeignKey(
@@ -122,6 +130,15 @@ class Clase(models.Model):
     
     def __str__(self):
         return f"{self.nombre} - {self.get_tipo_display()} ({self.fecha} {self.hora_inicio})"
+    
+    def clean(self):
+        """Valida que la hora de fin sea posterior a la hora de inicio."""
+        super().clean()
+        if self.hora_inicio and self.hora_fin:
+            if self.hora_fin <= self.hora_inicio:
+                raise ValidationError({
+                    'hora_fin': 'La hora de fin debe ser posterior a la hora de inicio.'
+                })
     
     @property
     def cupos_disponibles(self):

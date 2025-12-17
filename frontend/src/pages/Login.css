@@ -1,0 +1,108 @@
+/* Estilos para la página de Login */
+
+.login-page {
+  min-height: 100vh;
+  background-color: #000;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Fondo con imagen de gimnasio */
+/* Nota: Para cambiar la imagen, actualiza IMAGES.GYM_BACKGROUND en src/utils/constants.js */
+.bg-gym-image {
+  background-image: url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Efecto de resplandor suave detrás de la tarjeta */
+.glow-effect {
+  position: relative;
+}
+
+.glow-effect::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #D90429, transparent, #D90429);
+  z-index: -1;
+  filter: blur(20px);
+  opacity: 0.3;
+  border-radius: 1rem;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+/* Estilos para inputs con iconos */
+.group:focus-within svg {
+  color: #D90429;
+}
+
+/* Spinner de carga */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Efectos hover en botones */
+button:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0);
+}
+
+/* Transiciones suaves */
+* {
+  transition-property: color, background-color, border-color, transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .login-page h1 {
+    font-size: 2rem;
+  }
+  
+  .glow-effect .bg-black\/60 {
+    padding: 1.5rem;
+  }
+}

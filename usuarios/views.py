@@ -61,6 +61,66 @@ class UsuarioViewSet(viewsets.ModelViewSet):
             'usuario': UsuarioSerializer(usuario).data
         }, status=status.HTTP_201_CREATED)
     
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def admin_crear(self, request):
+        """
+        Endpoint para que un administrador cree usuarios con cualquier rol.
+        POST /api/usuarios/admin_crear/
+        """
+        # Verificar que el solicitante sea administrador
+        if request.user.rol != 'administrador':
+            return Response(
+                {'error': 'No tienes permisos para realizar esta acción'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Validar campos requeridos
+        required_fields = ['username', 'email', 'password', 'first_name', 'last_name']
+        for field in required_fields:
+            if not request.data.get(field):
+                return Response(
+                    {'error': f'El campo {field} es requerido'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        # Validar longitud de contraseña
+        password = request.data.get('password')
+        if len(password) < 6:
+            return Response(
+                {'error': 'La contraseña debe tener al menos 6 caracteres'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Crear usuario
+        try:
+            usuario = Usuario.objects.create_user(
+                username=request.data['username'],
+                email=request.data['email'],
+                first_name=request.data['first_name'],
+                last_name=request.data['last_name'],
+                telefono=request.data.get('telefono', ''),
+                rol=request.data.get('rol', Usuario.SOCIO),
+                estado_membresia=Usuario.ACTIVA,
+                password=password
+            )
+            
+            logger.info(
+                f'Admin {request.user.username} creó usuario: {usuario.username} '
+                f'(ID: {usuario.id}) - Rol: {usuario.rol}'
+            )
+            
+            return Response({
+                'message': 'Usuario creado exitosamente',
+                'usuario': UsuarioSerializer(usuario).data
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            logger.error(f'Error creando usuario: {str(e)}')
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
     @action(detail=False, methods=['get', 'patch'])
     def me(self, request):
         """
@@ -116,6 +176,47 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         update_session_auth_hash(request, usuario)
         
         return Response({'message': 'Contraseña cambiada exitosamente'})
+
+    @action(detail=True, methods=['post'])
+    def admin_cambiar_password(self, request, pk=None):
+        """
+        Endpoint para que un administrador cambie la contraseña de un usuario.
+        POST /api/usuarios/{id}/admin_cambiar_password/
+        """
+        from django.contrib.auth.password_validation import validate_password
+        from django.core.exceptions import ValidationError as DjangoValidationError
+        
+        usuario = self.get_object()
+        
+        # Verificar que el solicitante sea administrador
+        if request.user.rol != 'administrador':
+            return Response(
+                {'error': 'No tienes permisos para realizar esta acción'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        password = request.data.get('password')
+        if not password:
+            return Response(
+                {'error': 'La contraseña es requerida'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validar contraseña con validadores de Django
+        try:
+            validate_password(password, usuario)
+        except DjangoValidationError as e:
+            return Response(
+                {'error': list(e.messages)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        usuario.set_password(password)
+        usuario.save()
+        
+        logger.info(f'Admin {request.user.username} cambió contraseña de: {usuario.username}')
+        
+        return Response({'message': 'Contraseña actualizada exitosamente'})
     
     @action(detail=False, methods=['get'])
     def mis_reservas(self, request):
@@ -147,14 +248,36 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class InstructorViewSet(viewsets.ReadOnlyModelViewSet):
+class InstructorViewSet(viewsets.ModelViewSet):
     """
-    ViewSet de solo lectura para instructores.
-    Los socios pueden ver la lista de instructores.
+    ViewSet para gestión de instructores.
+    Los administradores pueden crear/editar instructores.
     """
-    queryset = Instructor.objects.filter(activo=True)
+    queryset = Instructor.objects.all()
     serializer_class = InstructorSerializer
     permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """Filtra instructores activos para usuarios regulares."""
+        if self.request.user.rol == 'administrador':
+            return Instructor.objects.all()
+        return Instructor.objects.filter(activo=True)
+    
+    @action(detail=False, methods=['get'], url_path='mi-perfil')
+    def mi_perfil(self, request):
+        """
+        Obtiene el perfil del instructor actual.
+        GET /api/instructores/mi-perfil/
+        """
+        try:
+            instructor = Instructor.objects.get(usuario=request.user)
+            serializer = self.get_serializer(instructor)
+            return Response(serializer.data)
+        except Instructor.DoesNotExist:
+            return Response(
+                {'detail': 'Usuario no es instructor'},
+                status=status.HTTP_404_NOT_FOUND
+            )
     
     @action(detail=True, methods=['get'])
     def clases(self, request, pk=None):

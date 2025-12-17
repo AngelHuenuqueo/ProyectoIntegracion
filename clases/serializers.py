@@ -19,7 +19,7 @@ class ClaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Clase
         fields = [
-            'id', 'nombre', 'tipo', 'descripcion', 'instructor',
+            'id', 'nombre', 'tipo', 'descripcion', 'imagen', 'instructor',
             'instructor_nombre', 'fecha', 'hora_inicio', 'hora_fin',
             'cupos_totales', 'cupos_ocupados', 'cupos_disponibles',
             'esta_llena', 'porcentaje_ocupacion', 'estado',
@@ -54,7 +54,7 @@ class ClaseDetalleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Clase
         fields = [
-            'id', 'nombre', 'tipo', 'descripcion', 'instructor',
+            'id', 'nombre', 'tipo', 'descripcion', 'imagen', 'instructor',
             'fecha', 'hora_inicio', 'hora_fin',
             'cupos_totales', 'cupos_ocupados', 'cupos_disponibles',
             'esta_llena', 'porcentaje_ocupacion', 'estado',
@@ -84,7 +84,7 @@ class ClaseCrearSerializer(serializers.ModelSerializer):
     class Meta:
         model = Clase
         fields = [
-            'nombre', 'tipo', 'descripcion', 'instructor',
+            'nombre', 'tipo', 'descripcion', 'imagen', 'instructor',
             'fecha', 'hora_inicio', 'hora_fin',
             'cupos_totales', 'estado', 'permite_lista_espera'
         ]

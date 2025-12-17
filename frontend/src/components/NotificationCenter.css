@@ -269,3 +269,36 @@
     right: -20px;
   }
 }
+
+/* Ver todas las notificaciones link */
+.notification-view-all {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(236, 72, 153, 0.1));
+  border-top: 1px solid var(--border-color);
+  color: #a855f7;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9em;
+  transition: all 0.3s ease;
+  border-radius: 0 0 12px 12px;
+}
+
+.notification-view-all:hover {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.2), rgba(236, 72, 153, 0.2));
+  color: #c084fc;
+}
+
+.notification-view-all svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s ease;
+}
+
+.notification-view-all:hover svg {
+  transform: translateX(4px);
+}
+

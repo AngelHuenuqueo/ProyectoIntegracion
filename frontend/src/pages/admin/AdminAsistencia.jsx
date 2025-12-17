@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import Toast from '../../components/Toast'
@@ -20,12 +20,7 @@ function AdminAsistencia() {
     setToast({ message, type })
   }
 
-  useEffect(() => {
-    verificarPermiso()
-    cargarClases()
-  }, [filtro])
-
-  const verificarPermiso = () => {
+  const verificarPermiso = useCallback(() => {
     const userStr = localStorage.getItem('user')
     if (userStr) {
       const user = JSON.parse(userStr)
@@ -34,19 +29,19 @@ function AdminAsistencia() {
         navigate('/clases')
       }
     }
-  }
+  }, [navigate])
 
-  const cargarClases = async () => {
+  const cargarClases = useCallback(async () => {
     try {
       setLoading(true)
       const res = await api.get('/clases/')
       const clasesData = res.data.results || res.data || []
-      
+
       const hoy = new Date().toISOString().split('T')[0]
       const ahora = new Date()
-      
+
       let clasesFiltradas = clasesData
-      
+
       if (filtro === 'pasadas') {
         // Clases que ya pasaron
         clasesFiltradas = clasesData.filter(c => {
@@ -56,7 +51,7 @@ function AdminAsistencia() {
       } else if (filtro === 'hoy') {
         clasesFiltradas = clasesData.filter(c => c.fecha === hoy)
       }
-      
+
       setClases(clasesFiltradas.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)))
     } catch (error) {
       console.error('Error cargando clases:', error)
@@ -64,7 +59,12 @@ function AdminAsistencia() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filtro])
+
+  useEffect(() => {
+    verificarPermiso()
+    cargarClases()
+  }, [verificarPermiso, cargarClases])
 
   const cargarReservas = async (claseId) => {
     try {
@@ -112,17 +112,17 @@ function AdminAsistencia() {
         setConfirmModal(null)
         try {
           const res = await api.post(`/reservas/${reservaId}/marcar_noshow/`)
-          
+
           let mensaje = '❌ Marcado como AUSENTE'
           let tipo = 'warning'
-          
+
           if (res.data.bloqueado) {
             mensaje += '\n⚠️ El usuario ha sido BLOQUEADO por 30 días'
             tipo = 'error'
           } else if (res.data.total_noshow_mes >= 2) {
             mensaje += `\n⚠️ ADVERTENCIA: ${res.data.total_noshow_mes}/3 ausencias este mes`
           }
-          
+
           showToast(mensaje, tipo)
           cargarReservas(claseSeleccionada.id)
         } catch (error) {
@@ -135,7 +135,7 @@ function AdminAsistencia() {
 
   const cancelarReserva = async (reservaId) => {
     const reserva = reservas.find(r => r.id === reservaId)
-    
+
     setConfirmModal({
       message: `¿Cancelar la reserva de ${reserva.socio?.first_name} ${reserva.socio?.last_name}?`,
       type: 'cancel',
@@ -158,7 +158,7 @@ function AdminAsistencia() {
       showToast('Selecciona al menos una reserva', 'warning')
       return
     }
-    
+
     setConfirmModal({
       message: `¿Marcar asistencia para ${seleccionadas.size} reservas?`,
       type: 'info',
@@ -169,7 +169,7 @@ function AdminAsistencia() {
             clase_id: claseSeleccionada.id,
             reservas_ids: Array.from(seleccionadas)
           })
-          
+
           showToast(`✅ ${seleccionadas.size} personas marcadas como PRESENTES`, 'success')
           setSeleccionadas(new Set())
           cargarReservas(claseSeleccionada.id)
@@ -183,12 +183,12 @@ function AdminAsistencia() {
 
   const marcarTodasAsistencia = async () => {
     const confirmadas = reservas.filter(r => r.estado === 'confirmada').length
-    
+
     if (confirmadas === 0) {
       showToast('No hay reservas confirmadas para marcar', 'warning')
       return
     }
-    
+
     setConfirmModal({
       message: `¿Marcar TODAS las reservas confirmadas (${confirmadas}) como asistieron?`,
       type: 'warning',
@@ -199,7 +199,7 @@ function AdminAsistencia() {
             clase_id: claseSeleccionada.id,
             todas: true
           })
-          
+
           showToast(`✅ ${res.data.count} personas marcadas como PRESENTES`, 'success')
           setSeleccionadas(new Set())
           cargarReservas(claseSeleccionada.id)
@@ -265,7 +265,7 @@ function AdminAsistencia() {
                   <tr key={clase.id}>
                     <td>{clase.fecha}</td>
                     <td><strong>{clase.nombre}</strong></td>
-                    <td>{clase.hora_inicio.substring(0,5)} - {clase.hora_fin.substring(0,5)}</td>
+                    <td>{clase.hora_inicio.substring(0, 5)} - {clase.hora_fin.substring(0, 5)}</td>
                     <td>{clase.instructor_nombre}</td>
                     <td>{clase.cupos_ocupados} / {clase.cupos_totales}</td>
                     <td>
@@ -287,7 +287,7 @@ function AdminAsistencia() {
         // Vista de reservas de la clase seleccionada
         <div>
           <div style={{ marginBottom: '1.5rem', background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-            <button 
+            <button
               onClick={() => {
                 setClaseSeleccionada(null)
                 setReservas([])
@@ -297,7 +297,7 @@ function AdminAsistencia() {
               ← Volver a lista de clases
             </button>
             <h2>{claseSeleccionada.nombre}</h2>
-            <p>📅 {claseSeleccionada.fecha} - ⏰ {claseSeleccionada.hora_inicio.substring(0,5)} - {claseSeleccionada.hora_fin.substring(0,5)}</p>
+            <p>📅 {claseSeleccionada.fecha} - ⏰ {claseSeleccionada.hora_inicio.substring(0, 5)} - {claseSeleccionada.hora_fin.substring(0, 5)}</p>
             <p>👤 {claseSeleccionada.instructor_nombre}</p>
             <p>Total reservas: {reservas.length}</p>
           </div>
@@ -352,10 +352,10 @@ function AdminAsistencia() {
                   </tr>
                 ) : (
                   reservas.map(reserva => (
-                    <tr key={reserva.id} style={{ 
-                      background: reserva.estado === 'completada' ? '#e8f5e9' : 
-                                 reserva.estado === 'noshow' ? '#ffebee' :
-                                 reserva.estado === 'cancelada' ? '#f5f5f5' : 'white'
+                    <tr key={reserva.id} style={{
+                      background: reserva.estado === 'completada' ? '#e8f5e9' :
+                        reserva.estado === 'noshow' ? '#ffebee' :
+                          reserva.estado === 'cancelada' ? '#f5f5f5' : 'white'
                     }}>
                       <td>
                         {reserva.estado === 'confirmada' && (
@@ -418,10 +418,10 @@ function AdminAsistencia() {
       )}
 
       {toast && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={() => setToast(null)} 
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
 
